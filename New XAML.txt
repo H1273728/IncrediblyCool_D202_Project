@@ -1,0 +1,73 @@
+<Window x:Class="BICT_Majors.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BICT_Majors"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="480" Width="900" ResizeMode="NoResize">
+    <Grid>
+
+
+        <TabControl Grid.Row ="0" HorizontalContentAlignment="Left">
+            <TabItem Header="It Just Works" Width="220">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="60"></RowDefinition>
+                        <RowDefinition Height="40"></RowDefinition>
+                        <RowDefinition Height="*" ></RowDefinition>
+                    </Grid.RowDefinitions>
+
+                    <Label Content="Current Courses" Grid.Row ="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20"/>
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal">
+                        <Label Content="Hello;" Grid.Row ="1" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="20"/>
+                        <Label Content="[name]" Grid.Row ="1" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="20"/>
+                        <Label Content="how are you" Grid.Row ="1" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="20"/>
+                    </StackPanel>
+
+                    <Grid Grid.Row="3">
+                        <ListBox Width="820" Height="272">
+                            <ListBoxItem Background="LightGray" Foreground="Black" FontFamily="Calibri" FontSize="20">
+                                <StackPanel Orientation="Horizontal" Height="63">
+                                    <TextBlock Text="Coffie" VerticalAlignment="Center"></TextBlock>
+                                </StackPanel>
+                            </ListBoxItem>
+                            <ListBoxItem Background="LightGray" Foreground="Black" FontFamily="Calibri" FontSize="20">
+                                <StackPanel Orientation="Horizontal" Height="63">
+                                    <TextBlock Text="Coffie" VerticalAlignment="Center"></TextBlock>
+                                </StackPanel>
+                            </ListBoxItem>
+                            <ListBoxItem Background="LightGray" Foreground="Black" FontFamily="Calibri" FontSize="20">
+                                <StackPanel Orientation="Horizontal" Height="63">
+                                    <TextBlock Text="Coffie" VerticalAlignment="Center"></TextBlock>
+                                </StackPanel>
+                            </ListBoxItem>
+                            <ListBoxItem Background="LightGray" Foreground="Black" FontFamily="Calibri" FontSize="20">
+                                <StackPanel Orientation="Horizontal" Height="63">
+                                    <TextBlock Text="Coffie" VerticalAlignment="Center"></TextBlock>
+                                </StackPanel>
+                            </ListBoxItem>
+                        </ListBox>
+                    </Grid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="WHY ISN'T IT WORKING???" Width="220">
+                <Grid Background="#FFE5E5E5"/>
+            </TabItem>
+            <TabItem Header="Fallout 76" Width="220">
+                <Grid Background="#FFE5E5E5"/>
+            </TabItem>
+            <TabItem Header="GOTY Edition " Width="220">
+                <Grid Background="#FFE5E5E5"/>
+            </TabItem>
+        </TabControl>
+
+
+
+
+
+
+
+    </Grid>
+</Window>
