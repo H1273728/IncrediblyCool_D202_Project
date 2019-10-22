@@ -1,0 +1,361 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+using System.Data; //added
+using System.Data.SqlClient; //added
+
+namespace BICT_Majors
+{
+    /// <summary>
+    /// Interaction logic for MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow : Window
+    {
+        string sid;
+        string sqlquery;
+        Datamanager dm = new Datamanager();
+        SqlCommand cmd;
+        SqlDataReader reader;
+
+        public MainWindow(string id)
+        {
+            InitializeComponent();
+
+            sid = id;
+
+            //Code to generate the listbox containing the courses that the logged in student is currently in.
+
+            List<string> temp = new List<string>();
+            List<string> currentcourseinfo = new List<string>();
+            List<string> allcourseinfo = new List<string>();
+
+            lblGreeting.Content = "Hello " + GetName(id) + ", how are you?";
+
+            radCurrent.IsChecked = true;
+
+            //lbxCurrent.ItemsSource = LoadStudentCourses(sid, "Current");
+
+            //List<string> allcodes = GetAllCodes();
+            //temp = GetCourseInfo(allcodes);
+
+            //foreach (string course in temp)
+            //{
+            //    string[] values = course.Split(',');
+
+            //    allcourseinfo.Add(values[0] + " " + values[1]);
+            //}
+            lbxAll.ItemsSource = displayCourseInfo(GetAllCodes());
+
+            grdAll.Visibility = Visibility.Hidden;
+            grdCurrent.Visibility = Visibility.Hidden;
+
+            fillMajorsComboBox();
+        }
+
+        public List<string> LoadStudentCourses(string id, string status)
+        {
+            List<string> currentcourseinfo = new List<string>();
+            List<string> temp = new List<string>();
+
+            List<string> codes = GetCodes(id, status);
+            temp = GetCourseInfo(codes);
+            foreach (string course in temp)
+            {
+                string[] values = course.Split(',');
+
+                currentcourseinfo.Add(values[0] + " " + values[1]);
+            }
+
+            return currentcourseinfo;
+        }
+
+        public string GetName(string studentId)
+        {
+            // This method is used to use the Id that the student logged in with to fetch their name from the Students database. Should only need to be used on form load I imagine.
+
+            string name = "";
+
+            sqlquery = "Select * from Students Where Id= @Id";
+            cmd = dm.RunQuery(sqlquery);
+
+            SqlParameter Id = cmd.Parameters.Add("@Id", SqlDbType.VarChar);
+
+            Id.Value = studentId;
+
+            reader = cmd.ExecuteReader();
+
+            if (reader.Read())
+            {
+                name = reader[1].ToString();
+            }
+            else
+            {
+                MessageBox.Show("No read");
+            }
+
+            dm.Close();
+
+            return name;
+        }
+
+        public List<string> GetCodes(string StudentId, string Status)
+        {
+            // This method is to fill a list with the codes from the Enrollments table, depending on what we want to search. The Status parameter is used to change which codes we want (Current, Failed, Passed).
+            // I imagine this method will be called later to filter which courses we want.
+
+            List<string> Codes = new List<string>();
+
+            sqlquery = "Select * from Enrollments Where (Student_Id= @Id And Result= @Status)"; // This sql statement will need to be changed I think if we want to display a combination of current, failed or passed Courses
+
+            cmd = dm.RunQuery(sqlquery);
+
+            SqlParameter Id = cmd.Parameters.Add("@Id", SqlDbType.VarChar);
+            SqlParameter CourseStatus = cmd.Parameters.Add("@Status", SqlDbType.VarChar);
+
+            Id.Value = StudentId;
+            CourseStatus.Value = Status;
+
+            reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                Codes.Add(reader[2].ToString().TrimEnd());
+            }
+
+            dm.Close();
+
+            return Codes;
+        }
+
+        public List<string> GetAllCodes()
+        {
+            List<string> codes = new List<string>();
+
+            sqlquery = "Select * from Courses";
+
+            cmd = dm.RunQuery(sqlquery);
+
+            reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                codes.Add(reader[0].ToString().TrimEnd());
+            }
+
+            dm.Close();
+
+            return codes;
+        }
+
+        public List<string> GetCourseInfo(List<string> Codes)
+        {
+            // This method is to use the codes from GetCodes() to find the rest of the Course information from the Courses table.
+
+            List<string> Courses = new List<string>();
+            for (int i = 0; i < Codes.Count; i++)
+            {
+                sqlquery = "Select * from Courses Where (Code= @CourseCode)";
+                cmd = dm.RunQuery(sqlquery);
+
+                SqlParameter CourseCode = cmd.Parameters.Add("@CourseCode", SqlDbType.VarChar);
+
+                CourseCode.Value = Codes[i];
+
+                reader = cmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    Courses.Add(reader[0] + "," + reader[1] + "," + reader[3] + "," + reader[4] + "," + reader[5] + "," + reader[6] + "," + "'" + reader[2] + "'");
+                }
+                else
+                {
+                    MessageBox.Show("No read");
+                }
+
+                dm.Close();
+            }
+
+            return Courses;
+        }
+
+        private List<string> displayCourseInfo(List<string> Codes)
+        {
+            List<string> allcourseinfo = new List<string>();
+            List<string> temp = new List<string>();
+
+            temp = GetCourseInfo(Codes);
+
+            foreach (string course in temp)
+            {
+                string[] values = course.Split(',');
+
+                allcourseinfo.Add(values[0] + " " + values[1]);
+            }
+
+            return allcourseinfo;
+        }
+
+        private void fillMajorsComboBox()
+        {
+            sqlquery = "Select * from Majors";
+
+            cmd = dm.RunQuery(sqlquery);
+
+            reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                cbxMajors.Items.Add(reader[1].ToString().TrimEnd());
+            }
+
+            dm.Close();
+        }
+
+        private void lbxCurrent_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            grdCurrent.Visibility = Visibility.Visible;
+
+            try
+            {
+                string[] values = lbxCurrent.SelectedItem.ToString().Split(' ');
+            
+
+            sqlquery = "Select * from Courses Where (Code= @CourseCode)";
+
+            cmd = dm.RunQuery(sqlquery);
+
+            SqlParameter CourseCode = cmd.Parameters.Add("@CourseCode", SqlDbType.VarChar);
+
+            CourseCode.Value = values[0];
+
+            reader = cmd.ExecuteReader();
+
+            if (reader.Read())
+            {
+                lblCCode.Content = reader[0];
+                lblCName.Content = reader[1];
+                lblCSemester.Content = reader[3];
+                lblCYear.Content = reader[4];
+                string five = reader[5].ToString();
+                if(five != "")
+                {
+                    lblCPreLabel.Content = "Prerequisite:";
+                    lblCPrerequisite.Content = reader[5];
+                }
+                else
+                {
+                    lblCPreLabel.Content = "";
+                    lblCPrerequisite.Content = "";
+                }
+                
+                tbkCDescription.Text = reader[2].ToString();
+            }
+            else
+            {
+                MessageBox.Show("Error Displaying course information");
+            }
+
+            dm.Close();
+            }
+            catch
+            {
+                grdCurrent.Visibility = Visibility.Hidden;
+            }
+        }
+
+        private void lbxAll_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            grdAll.Visibility = Visibility.Visible;
+
+            string[] values = lbxAll.SelectedItem.ToString().Split(' ');
+
+            sqlquery = "Select * from Courses Where (Code= @CourseCode)";
+
+            cmd = dm.RunQuery(sqlquery);
+
+            SqlParameter CourseCode = cmd.Parameters.Add("@CourseCode", SqlDbType.VarChar);
+
+            CourseCode.Value = values[0];
+
+            reader = cmd.ExecuteReader();
+
+            if (reader.Read())
+            {
+                lblACode.Content = reader[0];
+                lblAName.Content = reader[1];
+                lblASemester.Content = reader[3];
+                lblAYear.Content = reader[4];
+                string five = reader[5].ToString();
+                if (five != "")
+                {
+                    lblAPreLabel.Content = "Prerequisite:";
+                    lblAPrerequisite.Content = reader[5];
+                }
+                else
+                {
+                    lblAPreLabel.Content = "";
+                    lblAPrerequisite.Content = "";
+                }
+
+                tbkADescription.Text = reader[2].ToString();
+            }
+            else
+            {
+                MessageBox.Show("Error Displaying course information");
+            }
+
+            dm.Close();
+        }
+
+        private void radCurrent_Checked(object sender, RoutedEventArgs e)
+        {
+            lbxCurrent.ItemsSource = LoadStudentCourses(sid, "Current");
+        }
+        private void radPassed_Checked(object sender, RoutedEventArgs e)
+        {
+            lbxCurrent.ItemsSource = LoadStudentCourses(sid, "Pass");
+        }
+        private void radFailed_Checked(object sender, RoutedEventArgs e)
+        {
+            lbxCurrent.ItemsSource = LoadStudentCourses(sid, "Failed");
+        }
+
+        private void cbxMajors_DropDownClosed(object sender, EventArgs e)
+        {
+            List<string> cbxcodes = new List<string>();
+            sqlquery = "Select * from Majors WHERE (Majors= @MajorName)";
+
+            cmd = dm.RunQuery(sqlquery);
+
+            SqlParameter MajorName = cmd.Parameters.Add("@MajorName", SqlDbType.VarChar);
+
+            MajorName.Value = cbxMajors.SelectedItem.ToString();
+
+            reader = cmd.ExecuteReader();
+
+            if (reader.Read())
+            {
+                //cbxcodes.AddRange(reader[2].ToString().Split(','));
+                lbxAll.ItemsSource = displayCourseInfo(cbxcodes);
+            }
+            else
+            {
+                MessageBox.Show("No read");
+            }
+
+            dm.Close();
+
+        }
+    }
+}
