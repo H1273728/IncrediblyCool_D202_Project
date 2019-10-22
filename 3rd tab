@@ -1,0 +1,64 @@
+<TabItem x:Name="tabPlanner" Header="Planner">
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="400*"/>
+                        <ColumnDefinition Width="400*"/>
+                        <ColumnDefinition Width="400*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="60"></RowDefinition>
+                        <RowDefinition Height="40"></RowDefinition>
+                        <RowDefinition Height="*" ></RowDefinition>
+                        <RowDefinition Height="*" ></RowDefinition>
+                        <!--<RowDefinition Height="40" ></RowDefinition>-->
+                    </Grid.RowDefinitions>
+                    <Label Content="Plan Your Degree" Grid.Row ="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" FontWeight="Bold" Grid.Column="1" Foreground="#FEFEFE"/>
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Grid.ColumnSpan="1">
+                        <Label x:Name="lbly1" Content="Year 1" Grid.Row ="1" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20" FontWeight="Bold" Margin="110,0,0,0" Foreground="#FEFEFE"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Grid.Column="1">
+                        <Label x:Name="lbly2" Content="Year 2" Grid.Row ="1" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20" FontWeight="Bold" Margin="110,0,0,0" Foreground="#FEFEFE"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Grid.Column="2">
+                        <Label x:Name="lbly3" Content="Year 3" Grid.Row ="1" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="20" FontWeight="Bold" Margin="110,0,0,0" Foreground="#FEFEFE"/>
+                    </StackPanel>
+
+                    <ListBox x:Name="lbx1y1s" Grid.Column="0" Width="255" Background="White" HorizontalAlignment="Left" Grid.Row="2" Margin="20,20,0,0" 
+                        BorderBrush="#F49600" BorderThickness="2">
+                        <ListBoxItem/>
+                        <ListBoxItem/>
+                        <ListBoxItem/>
+                        <ListBoxItem/>
+                    </ListBox>
+
+                    <ListBox x:Name="lbx2y1s"  Width="255" Background="White" HorizontalAlignment="Left" Grid.Row="2" Grid.Column="1" Margin="20,20,0,0" 
+                             BorderBrush="#F49600" BorderThickness="2">
+                    </ListBox>
+
+                    <ListBox x:Name="lbx3y1s" Width="255" Background="White" HorizontalAlignment="Left" Grid.Row="2" Grid.Column="2" Margin="20,20,0,0" 
+                             BorderBrush="#F49600" BorderThickness="2">
+                    </ListBox>
+
+
+                    <ListBox x:Name="lbx1y2s" Width="255" Background="White" HorizontalAlignment="Left" Grid.Row="3" Margin="20,0,0,20" 
+                             BorderBrush="#F49600" BorderThickness="2">
+                        <ListBoxItem/>
+                        <ListBoxItem/>
+                        <ListBoxItem/>
+                        <ListBoxItem/>
+                    </ListBox>
+
+                    <ListBox x:Name="lbx2y2s" Width="255" Background="White" HorizontalAlignment="Left" Grid.Row="3" Grid.Column="1" Margin="20,0,0,20" 
+                             BorderBrush="#F49600" BorderThickness="2">
+                    </ListBox>
+
+                    <ListBox x:Name="lbx3y2s" Width="255" Background="White" HorizontalAlignment="Left" Grid.Row="3" Grid.Column="2" Margin="20,0,0,20" 
+                             BorderBrush="#F49600" BorderThickness="2">
+                    </ListBox>
+                </Grid>
+
+            </TabItem>
