@@ -1,0 +1,16 @@
+  <TabItem x:Name="tabDiagram" Header="Pathway Diagram">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+
+                    <Border BorderThickness="4" BorderBrush="#F49600" Margin="127,0,127,0" Height="425" Width="619" Grid.Row="1">
+                        <Image Source="graph.png" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Stretch="Fill"/>
+                    </Border>
+                </Grid>
+            </TabItem>
