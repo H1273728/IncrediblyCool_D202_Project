@@ -1,0 +1,678 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+using System.Data; //added
+using System.Data.SqlClient; //added
+using System.IO; //added
+
+namespace BICT_Majors
+{
+    /// <summary>
+    /// Interaction logic for MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow : Window
+    {
+        string sid;
+        string sqlquery;
+        List<string> cbxcodes = new List<string>();
+        Datamanager dm = new Datamanager();
+        SqlCommand cmd;
+        SqlDataReader reader;
+
+        public MainWindow(string id)
+        {
+            InitializeComponent();
+
+            sid = id;
+
+            //Code to generate the listbox containing the courses that the logged in student is currently in.
+
+            List<string> temp = new List<string>();
+            List<string> currentcourseinfo = new List<string>();
+            List<string> allcourseinfo = new List<string>();
+
+            lblGreeting.Content = "Hello " + GetName(id) + ", how are you?";
+
+            radCurrent.IsChecked = true;
+
+            //lbxCurrent.ItemsSource = LoadStudentCourses(sid, "Current");
+
+            //List<string> allcodes = GetAllCodes();
+            //temp = GetCourseInfo(allcodes);
+
+            //foreach (string course in temp)
+            //{
+            //    string[] values = course.Split(',');
+
+            //    allcourseinfo.Add(values[0] + " " + values[1]);
+            //}
+            lbxAll.ItemsSource = displayCourseInfo(GetAllCodes());
+
+            grdAll.Visibility = Visibility.Hidden;
+            grdCurrent.Visibility = Visibility.Hidden;
+
+            fillMajorsComboBox();
+
+            lbxPlannerAll.ItemsSource = displayCourseInfo(getPlannerCodes());
+        }
+
+        public List<string> LoadStudentCourses(string id, string status)
+        {
+            List<string> currentcourseinfo = new List<string>();
+            List<string> temp = new List<string>();
+
+            List<string> codes = GetCodes(id, status);
+            temp = GetCourseInfo(codes);
+            foreach (string course in temp)
+            {
+                string[] values = course.Split(',');
+
+                currentcourseinfo.Add(values[0] + " " + values[1]);
+            }
+
+            return currentcourseinfo;
+        }
+
+        public string GetName(string studentId)
+        {
+            // This method is used to use the Id that the student logged in with to fetch their name from the Students database. Should only need to be used on form load I imagine.
+
+            string name = "";
+
+            sqlquery = "Select * from Students Where Id= @Id";
+            cmd = dm.RunQuery(sqlquery);
+
+            SqlParameter Id = cmd.Parameters.Add("@Id", SqlDbType.VarChar);
+
+            Id.Value = studentId;
+
+            reader = cmd.ExecuteReader();
+
+            if (reader.Read())
+            {
+                name = reader[1].ToString() + " " + reader[2].ToString();
+            }
+            else
+            {
+                MessageBox.Show("No read");
+            }
+
+            dm.Close();
+
+            return name;
+        }
+
+        public List<string> GetCodes(string StudentId, string Status)
+        {
+            // This method is to fill a list with the codes from the Enrollments table, depending on what we want to search. The Status parameter is used to change which codes we want (Current, Failed, Passed).
+            // I imagine this method will be called later to filter which courses we want.
+
+            List<string> Codes = new List<string>();
+
+            sqlquery = "Select * from Enrollments Where (Student_Id= @Id And Result= @Status)"; // This sql statement will need to be changed I think if we want to display a combination of current, failed or passed Courses
+
+            cmd = dm.RunQuery(sqlquery);
+
+            SqlParameter Id = cmd.Parameters.Add("@Id", SqlDbType.VarChar);
+            SqlParameter CourseStatus = cmd.Parameters.Add("@Status", SqlDbType.VarChar);
+
+            Id.Value = StudentId;
+            CourseStatus.Value = Status;
+
+            reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                Codes.Add(reader[2].ToString().TrimEnd());
+            }
+
+            dm.Close();
+
+            return Codes;
+        }
+
+        public List<string> GetAllCodes()
+        {
+            List<string> codes = new List<string>();
+
+            sqlquery = "Select * from Courses";
+
+            cmd = dm.RunQuery(sqlquery);
+
+            reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                codes.Add(reader[0].ToString().TrimEnd());
+            }
+
+            dm.Close();
+
+            return codes;
+        }
+
+        public List<string> GetCourseInfo(List<string> Codes)
+        {
+            // This method is to use the codes from GetCodes() to find the rest of the Course information from the Courses table.
+
+            List<string> Courses = new List<string>();
+            for (int i = 0; i < Codes.Count; i++)
+            {
+                sqlquery = "Select * from Courses Where (Code= @CourseCode)";
+                cmd = dm.RunQuery(sqlquery);
+
+                SqlParameter CourseCode = cmd.Parameters.Add("@CourseCode", SqlDbType.VarChar);
+
+                CourseCode.Value = Codes[i];
+
+                reader = cmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    Courses.Add(reader[0] + "," + reader[1] + "," + reader[3] + "," + reader[4] + "," + reader[5] + "," + reader[6] + "," + "'" + reader[2] + "'");
+                }
+                else
+                {
+                    MessageBox.Show("No read");
+                }
+
+                dm.Close();
+            }
+
+            return Courses;
+        }
+
+        private List<string> displayCourseInfo(List<string> Codes)
+        {
+            List<string> allcourseinfo = new List<string>();
+            List<string> temp = new List<string>();
+
+            temp = GetCourseInfo(Codes);
+
+            foreach (string course in temp)
+            {
+                string[] values = course.Split(',');
+
+                allcourseinfo.Add(values[0] + " " + values[1]);
+            }
+
+            return allcourseinfo;
+        }
+
+        private void fillMajorsComboBox()
+        {
+            sqlquery = "Select * from Majors";
+
+            cmd = dm.RunQuery(sqlquery);
+
+            reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                cbxMajors.Items.Add(reader[1].ToString().TrimEnd());
+            }
+
+            dm.Close();
+        }
+
+        private void lbxCurrent_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            grdCurrent.Visibility = Visibility.Visible;
+
+            try
+            {
+                string[] values = lbxCurrent.SelectedItem.ToString().Split(' ');
+
+
+                sqlquery = "Select * from Courses Where (Code= @CourseCode)";
+
+                cmd = dm.RunQuery(sqlquery);
+
+                SqlParameter CourseCode = cmd.Parameters.Add("@CourseCode", SqlDbType.VarChar);
+
+                CourseCode.Value = values[0];
+
+                reader = cmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    lblCCode.Content = reader[0];
+                    lblCName.Content = reader[1];
+                    lblCSemester.Content = reader[3];
+                    lblCYear.Content = reader[4];
+                    string five = reader[5].ToString();
+                    if (five != "")
+                    {
+                        lblCPreLabel.Content = "Prerequisite:";
+                        lblCPrerequisite.Content = reader[5];
+                    }
+                    else
+                    {
+                        lblCPreLabel.Content = "";
+                        lblCPrerequisite.Content = "";
+                    }
+
+                    tbkCDescription.Text = reader[2].ToString();
+                }
+                else
+                {
+                    MessageBox.Show("Error Displaying course information");
+                }
+
+                dm.Close();
+            }
+            catch
+            {
+                grdCurrent.Visibility = Visibility.Hidden;
+            }
+        }
+
+        private void lbxAll_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            grdAll.Visibility = Visibility.Visible;
+
+            try
+            {
+                string[] values = lbxAll.SelectedItem.ToString().Split(' ');
+
+                sqlquery = "Select * from Courses Where (Code= @CourseCode)";
+
+                cmd = dm.RunQuery(sqlquery);
+
+                SqlParameter CourseCode = cmd.Parameters.Add("@CourseCode", SqlDbType.VarChar);
+
+                CourseCode.Value = values[0];
+
+                reader = cmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    lblACode.Content = reader[0];
+                    lblAName.Content = reader[1];
+                    lblASemester.Content = reader[3];
+                    lblAYear.Content = reader[4];
+                    string five = reader[5].ToString();
+                    if (five != "")
+                    {
+                        lblAPreLabel.Content = "Prerequisite:";
+                        lblAPrerequisite.Content = reader[5];
+                    }
+                    else
+                    {
+                        lblAPreLabel.Content = "";
+                        lblAPrerequisite.Content = "";
+                    }
+
+                    tbkADescription.Text = reader[2].ToString();
+                }
+                else
+                {
+                    MessageBox.Show("Error Displaying course information");
+                }
+
+                dm.Close();
+            }
+            catch
+            {
+                grdCurrent.Visibility = Visibility.Hidden;
+            }
+        }
+
+        private void radCurrent_Checked(object sender, RoutedEventArgs e)
+        {
+            lbxCurrent.ItemsSource = LoadStudentCourses(sid, "Current");
+        }
+
+        private void radPassed_Checked(object sender, RoutedEventArgs e)
+        {
+            lbxCurrent.ItemsSource = LoadStudentCourses(sid, "Pass");
+        }
+
+        private void radFailed_Checked(object sender, RoutedEventArgs e)
+        {
+            lbxCurrent.ItemsSource = LoadStudentCourses(sid, "Failed");
+        }
+
+        private void cbxMajors_DropDownClosed(object sender, EventArgs e)
+        {
+                tbxSearch.Clear();
+
+                cbxcodes.Clear();
+
+                sqlquery = "Select * from Majors WHERE (Majors= @MajorName)";
+
+                cmd = dm.RunQuery(sqlquery);
+
+                SqlParameter MajorName = cmd.Parameters.Add("@MajorName", SqlDbType.VarChar);
+
+
+                MajorName.Value = cbxMajors.SelectedItem.ToString().Trim(' ');
+
+                reader = cmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    cbxcodes.AddRange(reader[2].ToString().Split(','));
+                }
+                else
+                {
+                    MessageBox.Show("No read");
+                }
+
+                dm.Close();
+
+
+                if (cbxYear.SelectedIndex > -1)
+                {
+                    List<string> tempcodes = new List<string>();
+                    for (int i = 0; i < cbxcodes.Count; i++)
+                    {
+                        sqlquery = "Select * from Courses WHERE (code= @code) AND (year= @Year)";
+
+                        cmd = dm.RunQuery(sqlquery);
+
+                        SqlParameter Code = cmd.Parameters.Add("@code", SqlDbType.VarChar);
+                        SqlParameter Year = cmd.Parameters.Add("@Year", SqlDbType.NChar);
+
+                        Code.Value = cbxcodes[i];
+                        Year.Value = (cbxYear.SelectedIndex + 1).ToString();
+
+                        reader = cmd.ExecuteReader();
+
+                        if (reader.Read())
+                        {
+                            tempcodes.Add(reader[0].ToString().Trim(' '));
+                        }
+
+                        dm.Close();
+                    }
+
+                    lbxAll.ItemsSource = displayCourseInfo(tempcodes);
+                }
+                else
+                {
+                    lbxAll.ItemsSource = displayCourseInfo(cbxcodes);
+                }
+
+                grdAll.Visibility = Visibility.Hidden;
+        }
+
+        private void cbxYear_DropDownClosed(object sender, EventArgs e)
+        {
+            tbxSearch.Clear();
+
+            if (cbxMajors.SelectedIndex > -1)
+            {
+                List<string> tempcodes = new List<string>();
+                for (int i = 0; i < cbxcodes.Count; i++)
+                {
+                    sqlquery = "Select * from Courses WHERE (code= @code) AND (year= @Year)";
+
+                    cmd = dm.RunQuery(sqlquery);
+
+                    SqlParameter Code = cmd.Parameters.Add("@code", SqlDbType.VarChar);
+                    SqlParameter Year = cmd.Parameters.Add("@Year", SqlDbType.NChar);
+
+                    Code.Value = cbxcodes[i];
+                    Year.Value = (cbxYear.SelectedIndex + 1).ToString();
+
+                    reader = cmd.ExecuteReader();
+
+                    if (reader.Read())
+                    {
+                        tempcodes.Add(reader[0].ToString().Trim(' '));
+                    }
+
+                    dm.Close();
+                }
+
+                lbxAll.ItemsSource = displayCourseInfo(tempcodes);
+            }
+            else
+            {
+                cbxcodes.Clear();
+
+                sqlquery = "Select * from Courses WHERE (year= @Year)";
+
+                cmd = dm.RunQuery(sqlquery);
+
+                SqlParameter Year = cmd.Parameters.Add("@Year", SqlDbType.NChar);
+
+                Year.Value = (cbxYear.SelectedIndex + 1).ToString();
+
+                reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    cbxcodes.Add(reader[0].ToString().Trim(' '));
+                }
+
+                dm.Close();
+
+                lbxAll.ItemsSource = displayCourseInfo(cbxcodes);
+            }
+
+            grdAll.Visibility = Visibility.Hidden;
+        }
+
+        private void btnSearch_Click(object sender, RoutedEventArgs e)
+        {
+            Searcher courseSearcher = new Searcher();
+
+            string searchTerm = tbxSearch.Text.ToUpper();
+
+            List<string> searchresult = courseSearcher.Search(displayCourseInfo(GetAllCodes()), searchTerm);
+
+            lbxAll.ItemsSource = searchresult;
+        }
+
+        private void btnReset_Click(object sender, RoutedEventArgs e)
+        {
+            cbxMajors.Text = "~Select Major~";
+            cbxYear.Text = "~Year~";
+            lbxAll.ItemsSource = displayCourseInfo(GetAllCodes());
+            tbxSearch.Clear();
+        }
+
+        private void btnCurrent_Click(object sender, RoutedEventArgs e)
+        {
+            setStatus("Current");
+        }
+
+        private void btnPassed_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void btnFailed_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void setStatus(string status)
+        {
+            string query = "UPDATE Enrollments SET (Result= @Result) WHERE (Courses= @Code) AND  (Student_Id= @Sid)";
+
+            cmd = dm.RunQuery(query);
+
+            SqlParameter Result = cmd.Parameters.Add("@Result", SqlDbType.VarChar);
+            SqlParameter Code = cmd.Parameters.Add("@Code", SqlDbType.VarChar);
+            SqlParameter Sid = cmd.Parameters.Add("@Sid", SqlDbType.VarChar);
+
+            Result.Value = status;
+            Code.Value = lblCCode.Content;
+            Sid.Value = sid;
+
+            int indicator = cmd.ExecuteNonQuery();
+
+            if (indicator > 0)
+            {
+                MessageBox.Show("Update OK");
+
+            }
+            else
+            {
+                MessageBox.Show("Not Updated");
+            }
+
+
+
+            //dm.Close();
+
+            //reader = cmd.ExecuteReader();
+
+            //if(reader.Read())
+            //{
+            //    MessageBox.Show("Update successful");
+            //}
+            //else
+            //{
+            //    MessageBox.Show("No");
+            //}
+        }
+
+        private List<string> getPlannerCodes()
+        {
+            List<string> Codes = new List<string>();
+
+            sqlquery = "Select * from Enrollments Where (Student_Id= @Id) And (Result='Pass' Or Result='Current')"; // This sql statement will need to be changed I think if we want to display a combination of current, failed or passed Courses
+
+            cmd = dm.RunQuery(sqlquery);
+
+            SqlParameter Id = cmd.Parameters.Add("@Id", SqlDbType.VarChar);
+
+            Id.Value = sid;
+
+            reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                Codes.Add(reader[2].ToString().TrimEnd());
+            }
+
+            dm.Close();
+
+
+            return Codes;
+        }
+
+        private List<string> getMajorCodes()
+        {
+            List<string> Codes = new List<string>();
+
+            sqlquery = "Select * From Majors Where";
+            return Codes;
+        }
+
+        private void btnShowAvailable_Click(object sender, RoutedEventArgs e)
+        {
+            List<string> codes = getPlannerCodes();
+            List<string> courses = new List<string>();
+
+            foreach (string code in codes)
+            {
+                string query = "Select * From Courses Where PreRequisite= @Code Order By year";
+
+                cmd = dm.RunQuery(query);
+
+                SqlParameter Code = cmd.Parameters.Add("@Code", SqlDbType.VarChar);
+
+                Code.Value = code;
+
+                reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    courses.Add(reader[0] + " " + reader[1]);
+                }
+
+                dm.Close();
+            }
+
+            lbxPlannerAll.ItemsSource = courses;
+
+            lblHead.Content = "Available Courses";
+
+            btnAddToPlan.Visibility = Visibility.Visible;
+        }
+
+        private void btnPlannerReset_Click(object sender, RoutedEventArgs e)
+        {
+            lblHead.Content = "Current and Passed Courses";
+            lbxPlannerAll.ItemsSource = displayCourseInfo(getPlannerCodes());
+
+            btnAddToPlan.Visibility = Visibility.Hidden;
+        }
+
+        private void btnAddToPlan_Click(object sender, RoutedEventArgs e)
+        {
+            if (lbxPlannerAll.SelectedIndex > -1)
+            {
+                if (lbxPlanned.Items.Contains(lbxPlannerAll.SelectedItem.ToString()))
+                {
+                    MessageBox.Show("Course Already Added");
+                }
+                else
+                {
+                    lbxPlanned.Items.Add(lbxPlannerAll.SelectedItem);
+                }
+            }
+            else
+            {
+                MessageBox.Show("Please select a course");
+            }
+        }
+
+        private void btnRemoveFromPlan_Click(object sender, RoutedEventArgs e)
+        {
+            if (lbxPlanned.SelectedIndex > -1)
+            {
+                lbxPlanned.Items.Remove(lbxPlanned.SelectedItem);
+            }
+            else
+            {
+                MessageBox.Show("Please select a course");
+            }
+        }
+
+        private void btnRemoveAllFromPlanner_Click(object sender, RoutedEventArgs e)
+        {
+            lbxPlanned.Items.Clear();
+        }
+
+        private void btnSave_Click(object sender, RoutedEventArgs e)
+        {
+            StreamWriter plan = new StreamWriter(GetName(sid) + " " + sid + ".txt", false);
+
+            plan.WriteLine("==========");
+            plan.WriteLine(DateTime.Now.ToString("dd/MM/yyyy"));
+            plan.WriteLine("");
+            plan.WriteLine(GetName(sid) + " - " + sid);
+            plan.WriteLine("");
+            plan.WriteLine("The course you have selected for BICT are as follows:");
+            plan.WriteLine("");
+
+            foreach (string item in lbxPlanned.Items)
+            {
+                plan.WriteLine(item.ToString());
+            }
+
+            plan.WriteLine("==========");
+
+            plan.Close();
+
+            MessageBox.Show("Save Successful");
+        }
+    }
+}
