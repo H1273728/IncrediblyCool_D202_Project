@@ -1,0 +1,205 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+using System.Data; //added
+using System.Data.SqlClient; //added
+
+namespace BICT_Majors
+{
+    /// <summary>
+    /// Interaction logic for Admin.xaml
+    /// </summary>
+    public partial class Admin : Window
+    {
+        public Admin()
+        {
+            InitializeComponent();
+
+            lbxCourses.ItemsSource = displayCourseInfo(GetAllCodes());
+
+            string sqlquery = "Select * from Courses";
+
+            cmd = dm.RunQuery(sqlquery);
+
+            reader = cmd.ExecuteReader();
+            cbo_preReq.Items.Add("null");
+
+            while (reader.Read())
+            {
+                cbo_preReq.Items.Add(reader[0].ToString().TrimEnd());
+            }
+
+            dm.Close();
+
+        }
+
+        Datamanager dm = new Datamanager();
+        SqlCommand cmd;
+        SqlDataReader reader;
+
+
+        public List<string> GetAllCodes()
+        {
+            List<string> codes = new List<string>();
+
+            string sqlquery = "Select * from Courses";
+
+            cmd = dm.RunQuery(sqlquery);
+
+            reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                codes.Add(reader[0].ToString().TrimEnd());
+            }
+
+            dm.Close();
+
+            return codes;
+        }
+
+        public List<string> GetCourseInfo(List<string> Codes)
+        {
+            // This method is to use the codes from GetCodes() to find the rest of the Course information from the Courses table.
+
+            List<string> Courses = new List<string>();
+            for (int i = 0; i < Codes.Count; i++)
+            {
+                string sqlquery = "Select * from Courses Where (Code= @CourseCode)";
+                cmd = dm.RunQuery(sqlquery);
+
+                SqlParameter CourseCode = cmd.Parameters.Add("@CourseCode", SqlDbType.VarChar);
+
+                CourseCode.Value = Codes[i];
+
+                reader = cmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    Courses.Add(reader[0] + "," + reader[1] + "," + reader[3] + "," + reader[4] + "," + reader[5] + "," + reader[6] + "," + "'" + reader[2] + "'");
+                }
+                else
+                {
+                    MessageBox.Show("No read");
+                }
+
+                dm.Close();
+            }
+
+            return Courses;
+        }
+
+        private List<string> displayCourseInfo(List<string> Codes)
+        {
+            List<string> allcourseinfo = new List<string>();
+            List<string> temp = new List<string>();
+
+            temp = GetCourseInfo(Codes);
+
+            foreach (string course in temp)
+            {
+                string[] values = course.Split(',');
+
+                allcourseinfo.Add(values[0] + " " + values[1]);
+            }
+
+            return allcourseinfo;
+        }
+
+
+        private void save()
+        {
+            try
+            {
+                string query = "INSERT INTO Courses VALUES(@code, @name, @description, @semester, @year, @PreRequisite, @compulsory)";
+
+                //code,name,description,semester,year,compulsory,PreRequisite
+
+                SqlCommand cmd = dm.RunQuery(query);
+
+                SqlParameter code = cmd.Parameters.Add("@code", SqlDbType.VarChar);
+                SqlParameter name = cmd.Parameters.Add("@name", SqlDbType.VarChar);
+                SqlParameter description = cmd.Parameters.Add("@description", SqlDbType.VarChar);
+                SqlParameter semester = cmd.Parameters.Add("@semester", SqlDbType.VarChar);
+                SqlParameter year = cmd.Parameters.Add("@year", SqlDbType.VarChar);
+                SqlParameter PreRequisite = cmd.Parameters.Add("@PreRequisite", SqlDbType.VarChar);
+                SqlParameter compulsory = cmd.Parameters.Add("@compulsory", SqlDbType.VarChar);
+
+                code.Value = tbx_code.Text.Trim();
+                name.Value = tbx_name.Text.Trim();
+                description.Value = tbx_desc.Text.Trim();
+                semester.Value = cbo_sems.SelectedItem.ToString().Trim();
+                year.Value = cbo_year.SelectedItem.ToString().Trim();
+                PreRequisite.Value = cbo_preReq.SelectedItem.ToString().Trim();
+                compulsory.Value = cbo_comp.SelectedItem.ToString().Trim();
+
+                int indicator = cmd.ExecuteNonQuery();
+
+                if (indicator > 0)
+                {
+                    MessageBox.Show("Course Added to Database");
+                }
+
+                else
+                {
+                    MessageBox.Show("Something went wrong!");
+                }
+
+                dm.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void delete(object sender, EventArgs e)
+        {
+            try
+            {
+
+                string query = "DELETE from Courses WHERE code = @code";
+
+                SqlCommand cmd = dm.RunQuery(query);
+
+                SqlParameter code = cmd.Parameters.Add("@code", SqlDbType.VarChar);
+
+                code.Value = tbx_deleteCourse.Text;
+
+                int indicator = cmd.ExecuteNonQuery();
+
+                if (indicator > 0)
+                {
+                    MessageBox.Show("Course Removed from Database");
+                }
+
+                else
+                {
+                    MessageBox.Show("Something went wrong!");
+                }
+
+                dm.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void Btn_AddCourse_Click(object sender, RoutedEventArgs e)
+        {
+            save();
+        }
+    }
+}
